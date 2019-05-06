@@ -359,6 +359,7 @@ class Description(object):
         ID = "Project ID"
         DESCRIPTION = "Set ticket description."
         ASSIGNEE = "Set assignee."
+        PRIORITY = "Set priority."
         SUMMARY = "Set ticket summary."
         EPIC = "Set ticket epic such as 'SAF-2185'."
         TYPE = "Set ticket type used when creating a ticket."
@@ -389,6 +390,7 @@ class Description(object):
         """
         DESCRIPTION = "Update ticket description."
         ASSIGNEE = "Update assignee."
+        PRIORITY = "Update priority."
         STATUS = "Update ticket status."
         SUMMARY = "Update ticket summary."
         EPIC = "New epic ticket such as 'SAF-2185'."
@@ -416,6 +418,8 @@ class Fields(object):
     REPORTER = "reporter"
     STATUS = "status"
     PROJECT = "project"
+    PRIORITY = "priority"
+    PRIORITY_NAME = "name"
     LABELS = "labels"
     DESCRIPTION = "description"
     COMPONENTS = "components"
@@ -435,9 +439,19 @@ class Type(object):
     EPIC = "Epic"
 
 
-class Status(object):
-    """ Ticket status enum. """
+class Priority(object):
+    """
+    Ticket priority enum.
+    """
+    URGENT = "P0"
+    HIGH = "P1"
+    NORMAL = "P2"
 
+
+class Status(object):
+    """
+    Ticket status enum.
+    """
     DUPLICATE = "Duplicate"
     IN_VALIDATION = "In Validation"
     IN_CODE_REVIEW = "In Code Review"
@@ -661,6 +675,7 @@ def update(*ticket_ids,
            assignee: Description.Update.ASSIGNEE=None,
            status: Description.Update.STATUS=None,
            summary: Description.Update.SUMMARY=None,
+           priority: Description.Update.PRIORITY=None,
            epic: Description.Update.EPIC=None,
            notify: Description.Update.NOTIFY=True,
            components: Description.Update.COMPONENTS=None,
@@ -739,6 +754,10 @@ def update(*ticket_ids,
                 for component in components.split(",")
             ] if components else None
         })
+        if priority and isinstance(priority, str):
+            query[Fields.PRIORITY] = {
+                Fields.PRIORITY_NAME: priority,
+            }
         if query:
             print(json.dumps(query, indent=4, sort_keys=True))
             ticket.update(notify=notify, **query)
@@ -784,6 +803,7 @@ def create(description: Description.Create.DESCRIPTION=None,
            epic: Description.Create.EPIC=None,
            ticket_type: Description.Create.TYPE=None,
            project: Description.Create.PROJECT=None,
+           priority: Description.Create.PRIORITY=Priority.NORMAL,
            components: Description.Create.COMPONENTS=None,
            is_task: Description.Create.IS_TASK=False,
            is_epic: Description.Create.IS_EPIC=False,
@@ -809,6 +829,7 @@ def create(description: Description.Create.DESCRIPTION=None,
     profile = config.get_profile(profile_name)
     atlassian = Attlasian(profile)
 
+    # Validating function parameters.
     Stdout.title("New Ticket")
     if not summary or not isinstance(summary, str):
         raise ValueError("Summary is required.")
@@ -824,6 +845,8 @@ def create(description: Description.Create.DESCRIPTION=None,
         ticket_type = Type.TASK
     if not assignee or not isinstance(assignee, str):
         raise ValueError("Assignee is required.")
+    if not priority or not isinstance(priority, str):
+        raise ValueError("Priority is required.")
     if epic and not project:
         project = epic.split("-")[0]
     if not project or not isinstance(project, str):
@@ -839,6 +862,9 @@ def create(description: Description.Create.DESCRIPTION=None,
         Fields.DESCRIPTION: description,
         Fields.SUMMARY: summary,
         Fields.PROJECT: project,
+        Fields.PRIORITY: {
+            Fields.PRIORITY_NAME: priority,
+        },
         Fields.COMPONENTS: [
             {
                 Fields.ADD: {Fields.NAME: component}
