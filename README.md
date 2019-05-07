@@ -52,7 +52,7 @@ P0  PY-1111   xxxxx.xxxxxxxx       Done              Lorem Ipsum Dolor
 
 #### Assign a ticket to MK.
 ```
-python3 opal.py comment PY-1111 "Can you please review it?"
+python3 opal.py comment PY-1111 --text "Can you please review it?"
 python3 opal.py update PY-1111 --assignee MK --in-validation
 ```
 
@@ -132,7 +132,7 @@ Updated: PY-1111
 
 ### Add a comment from a TXT file.
 ```
-python3 opal.py comment PY-1111 ./saf-1111.txt 
+python3 opal.py comment PY-1111 --text ./saf-1111.txt 
 ```
 Response:
 ```
@@ -141,6 +141,7 @@ PY-1111
 --------------------------------------------------
 Commented on: PY-1111
 ```
+
 ### Create a new ticket.
 ```
 python3 opal.py create --assignee MC --components xxxxx --description "Lorem Ipsum Dolor" --is-task --labels xxxx,xxxxx,Q22019 --summary "Lorem Ipsum Dolor" --project "PY" --in-progress
@@ -191,6 +192,7 @@ PY-1111
 Updated: PY-1111
 Created: PY-1111
 ```
+
 ### Search ongoing tickets assigned to you.
 ```
 python3 opal.py search --mine --ongoing
@@ -221,4 +223,9 @@ python3 opal.py ongoing
 ### Close JIRA Ticket.
 ```
 python3 opal.py close PY-1111
+```
+
+#### Comment and tag people.
+```
+python3 opal.py comment PY-1111 --text "Can you please review it?" --cc MK,VB,GG
 ```

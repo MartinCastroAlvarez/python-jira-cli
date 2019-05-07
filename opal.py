@@ -382,6 +382,7 @@ class Description(object):
         """
         ID = "Ticket ID."
         TEXT = "Comment text or type."
+        CC = "Copy people in comment."
         UPLOAD = "Upload file to ticket."
 
     class Update(object):
@@ -770,7 +771,8 @@ def comment(ticket_id: Description.Comment.ID,
             text: Description.Comment.TEXT=None,
             profile_name: Description.Script.PROFILE_NAME=Default.PROFILE_NAME,
             config_path: Description.Script.CONFIG_PATH=Default.CONFIG_PATH,
-            media: Description.Comment.UPLOAD=None):  # TODO
+            cc: Description.Comment.CC=None,
+            media: Description.Comment.UPLOAD=None):
     """
     JIRA comment manager.
     """
@@ -780,16 +782,33 @@ def comment(ticket_id: Description.Comment.ID,
     profile = config.get_profile(profile_name)
     atlassian = Attlasian(profile)
 
-    if not text or not isinstance(text, str):
-        raise ValueError("Invalid text")
+    # Initialiizing.
     Stdout.title(ticket_id)
+
+    # Getting ticket number.
     if not ticket_id or not isinstance(ticket_id, str):
         raise ValueError("Ticket ID is required.")
+
+    # Validating text.
+    if not text or not isinstance(text, str):
+        raise ValueError("Invalid text")
+
+    # Fetching text from file.
     if text and os.path.isfile(text):
         with open(text, 'r') as f:
             text = f.read().strip()
     if not text or not isinstance(text, str):
         raise ValueError("Invalid text.")
+
+    # Adding cc.
+    if cc and isinstance(cc, str):
+        cc_text = (
+            "[~{}]".format(profile.people.find(alias))
+            for alias in cc.split(",")
+        )
+        text = "{}\n\n{}".format(text, " ".join(cc_text))
+
+    # Commenting on ticket.
     ticket = atlassian.jira.issue(ticket_id)
     atlassian.jira.add_comment(ticket, text)
     print("Commented on:", ticket.key)
