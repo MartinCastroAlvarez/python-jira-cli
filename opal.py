@@ -806,7 +806,7 @@ def comment(ticket_id: Description.Comment.ID,
             "[~{}]".format(profile.people.find(alias))
             for alias in cc.split(",")
         )
-        text = "{}\n\n{}".format(text, " ".join(cc_text))
+        text = "{}\n\ncc {}".format(text, " ".join(cc_text))
 
     # Commenting on ticket.
     ticket = atlassian.jira.issue(ticket_id)
