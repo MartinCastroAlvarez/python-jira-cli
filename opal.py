@@ -641,7 +641,7 @@ def search(assignee: Description.Search.ASSIGNEE=None,
             '{}="{}"'.format(Fields.STATUS, Status.IN_VALIDATION),
             '{}="{}"'.format(Fields.STATUS, Status.IN_PROGRESS),
             '{}="{}"'.format(Fields.STATUS, Status.OPEN),
-            # '{}="{}"'.format(Fields.STATUS, Status.BLOCKED),
+            '{}="{}"'.format(Fields.STATUS, Status.BLOCKED),
             '{}="{}"'.format(Fields.STATUS, Status.IN_DEVELOPMENT),
         ])
         query.append("({})".format(status))
