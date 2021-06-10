@@ -48,3 +48,13 @@ python3 opal.py search --status "in validation"
 ```
 python3 opal.py search --status "in progress" --assignee "martin castro"
 ```
+
+##### Search for all User Stories
+```
+python3 opal.py search --ticket-type "story" --assignee "martin castro"
+```
+
+##### Search for all bugs
+```
+python3 opal.py search --ticket-type "bug" --status "in progress"
+```

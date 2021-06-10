@@ -4,6 +4,7 @@ Jira CLI.
 
 Reference:
 - https://jira.readthedocs.io/en/master/api.html
+- https://jira.readthedocs.io/en/master/examples.html
 - https://confluence.atlassian.com/jiracoreserver073/advanced-searching-861257209.html
 """
 
@@ -31,26 +32,6 @@ if not config.get('api_token'):
 
 HOST: str = f'https://{config["account"]}.atlassian.net'
 jira: JIRA = JIRA(HOST, basic_auth=(config['username'], config['api_token']))
-
-
-def not_empty(d: dict) -> dict:
-    """
-    Returns another dictionary that does
-    not have any null values.
-
-    @param d: Any dict.
-
-    @raises ValueError: If dict is invalid.
-
-    @returns: Cleaned dict.
-    """
-    if not d or not isinstance(d, dict):
-        raise ValueError("Invalid dict:", d)
-    return {
-        k: v
-        for k, v in d.items()
-        if v is not None
-    }
 
 
 class Format:
@@ -444,18 +425,14 @@ def details(*ticket_ids):
         Stdout.table("Assignee", ticket.fields.assignee.displayName if ticket.fields.assignee else '')
         Stdout.table("Reporter", ticket.fields.reporter.displayName if ticket.fields.reporter else '')
         Stdout.table("Creator", ticket.fields.creator.displayName if ticket.fields.creator else '')
-        Stdout.table("Labels", json.dumps(ticket.fields.labels))
-        Stdout.table("Created", ticket.fields.created)
-        Stdout.table("Updated", ticket.fields.updated)
-        Stdout.table("Resolved", ticket.fields.resolutiondate if ticket.fields.resolutiondate else '')
-        Stdout.table("Components", json.dumps([
+        Stdout.table("Labels", ', '.join(ticket.fields.labels))
+        Stdout.table("Components", ', '.join([
             component.name
             for components in ticket.fields.components
         ]))
-        # Stdout.section("Subtasks")
-        # for subtask in ticket.fields.subtasks:
-        #     raise NotImplementedError(subtask)
-        # Linked Issues.
+        Stdout.table("Created", ticket.fields.created)
+        Stdout.table("Updated", ticket.fields.updated)
+        Stdout.table("Resolved", ticket.fields.resolutiondate if ticket.fields.resolutiondate else '')
         Stdout.section("Description")
         print(ticket.fields.description)
         Stdout.line()
