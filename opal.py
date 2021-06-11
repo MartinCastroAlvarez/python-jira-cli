@@ -191,7 +191,6 @@ def update(*ticket_ids,
            summary: 'Ticket summary' = '',
            priority: 'Ticket priority' = '',
            epic: 'Ticket Epic' = '',
-           notify: 'Ticket notification' = '',
            components: 'Ticket components' = '',
            labels: 'Ticket labels' = ''):
     """ JIRA tickets manager. """
@@ -255,7 +254,6 @@ def update(*ticket_ids,
             }
         if query:
             print(json.dumps(query, indent=4, sort_keys=True))
-            ticket.update(notify=notify, **query)
         print("Updated:", ticket.key)
     """
 
@@ -295,27 +293,16 @@ def create(description: 'Ticket Description' = '',
            status: 'Ticket status' = '',
            summary: 'Ticket summary' = '',
            priority: 'Ticket priority' = '',
-           epic: 'Ticket Epic' = '',
-           notify: 'Ticket notification' = '',
            components: 'Ticket components' = '',
            labels: 'Ticket labels' = ''):
     """ JIRA tickets manager. """
-    raise NotImplementedError()
-    """
     # Validating function parameters.
+    """
     Stdout.title("New Ticket")
     if not summary or not isinstance(summary, str):
         raise ValueError("Summary is required.")
     if not description or not isinstance(description, str):
         description = summary
-    if is_task:
-        ticket_type = Type.TASK
-    if is_bug:
-        ticket_type = Type.BUG
-    if is_epic:
-        ticket_type = Type.EPIC
-    if not ticket_type or not isinstance(ticket_type, str):
-        ticket_type = Type.TASK
     if not assignee or not isinstance(assignee, str):
         raise ValueError("Assignee is required.")
     if not priority or not isinstance(priority, str):
@@ -330,25 +317,24 @@ def create(description: 'Ticket Description' = '',
             description = f.read().strip()
     # Creating ticket.
     query = not_empty({
-        Fields.DESCRIPTION: description,
-        Fields.SUMMARY: summary,
-        Fields.PROJECT: project,
-        Fields.PRIORITY: {
-            Fields.PRIORITY_NAME: priority,
+        'description': description,
+        'summary': summary,
+        'project': project,
+        'priority': {
+            'name': priority,
         },
-        Fields.COMPONENTS: [
+        'components': [
             {
-                Fields.ADD: {Fields.NAME: component}
+                'add': {'name': component}
             }
             for component in components.split()
         ] if components else None,
-        Fields.ASSIGNEE: {
-            Fields.NAME: People.find(assignee),
+        'assignee': {
+            'name': assignee,
         },
-        Fields.TYPE: {
-            Fields.NAME: Type.TASK
+        'type': {
+            'name': ticket_type,
         },
-        Fields.EPIC: epic or None,
     })
     print(json.dumps(query, indent=4, sort_keys=True))
     ticket = jira.create_issue(query)
