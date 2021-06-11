@@ -6,6 +6,7 @@ Reference:
 - https://jira.readthedocs.io/en/master/api.html
 - https://jira.readthedocs.io/en/master/examples.html
 - https://confluence.atlassian.com/jiracoreserver073/advanced-searching-861257209.html
+- https://confluence.atlassian.com/jiracoreserver073/advanced-searching-functions-reference-861257222.html
 """
 
 import os
@@ -126,6 +127,7 @@ class Stdout:
 @begin.logging
 def search(assignee: 'Search by assignee' = '',
            mine: 'Search for tickets assigned to you' = False,
+           active: 'Search in Active Sprint' = False,
            status: 'Search by status' = '',
            project: 'Search by project ' = '',
            sort_by: 'Sort key' = "priority desc",
@@ -155,6 +157,9 @@ def search(assignee: 'Search by assignee' = '',
         query.append("assignee=currentUser()")
     elif assignee:
         query.append("assignee='{}'".format(assignee))
+    # Search by sprint.
+    if active:
+        query.append('sprint IN openSprints()')
     # Search tickets.
     Stdout.dumps(query)
     Stdout.line()
@@ -262,34 +267,25 @@ def comment(ticket_id: 'Ticket ID' = '',
             cc: 'Tag people' = '',
             media: 'Attach file' = ''):
     """ JIRA comment manager. """
-    raise NotImplementedError()
-    """
-    # Initialiizing.
     Stdout.title(ticket_id)
-    # Getting ticket number.
-    if not ticket_id or not isinstance(ticket_id, str):
+    if not ticket_id:
         raise ValueError("Ticket ID is required.")
-    # Validating text.
-    if not text or not isinstance(text, str):
+    if not text:
         raise ValueError("Invalid text")
-    # Fetching text from file.
-    if text and os.path.isfile(text):
-        with open(text, 'r') as f:
-            text = f.read().strip()
-    if not text or not isinstance(text, str):
-        raise ValueError("Invalid text.")
-    # Adding cc.
-    if cc and isinstance(cc, str):
-        cc_text = (
-            "[~{}]".format(People.find(alias))
-            for alias in cc.split(",")
-        )
-        text = "{}\n\ncc {}".format(text, " ".join(cc_text))
-    # Commenting on ticket.
-    ticket = jira.issue(ticket_id)
+    if os.path.isfile(text):
+        with open(text, 'r') as file_handler:
+            text: str = file_handler.read().strip()
+        if not text:
+            raise ValueError("Invalid text file.")
+    if person and isinstance(person, str):
+        cc_text: str = ' '.join([
+            "[~{}]".format(person)
+            for alias in person.split(",")
+        ])
+        text: str = f"{text}\n\ncc {cc_text}"
+    ticket: jira.resources.Issue = jira.issue(ticket_id)
     jira.add_comment(ticket, text)
     print("Commented on:", ticket.key)
-    """
 
 
 @begin.subcommand
@@ -412,46 +408,48 @@ def projects(id: 'Project ID' = ''):
 
 @begin.subcommand
 @begin.logging
-def details(*ticket_ids):
+def details(ticket_id: str):
     """ JIRA tickets details """
-    for ticket_id in ticket_ids:
-        Stdout.title(ticket_id)
-        ticket: jira.resources.Issue = jira.issue(ticket_id)
-        Stdout.table("Summary", ticket.fields.summary)
-        # Stdout.table("Project", ticket.fields.project.key)
-        Stdout.table("Type", Format.color(ticket.fields.issuetype.name))
-        Stdout.table("Priority", ticket.fields.priority.name)
-        Stdout.table("Status", ticket.fields.status.statusCategory.key)
-        Stdout.table("Assignee", ticket.fields.assignee.displayName if ticket.fields.assignee else '')
-        Stdout.table("Reporter", ticket.fields.reporter.displayName if ticket.fields.reporter else '')
-        Stdout.table("Creator", ticket.fields.creator.displayName if ticket.fields.creator else '')
-        Stdout.table("Labels", ', '.join(ticket.fields.labels))
-        Stdout.table("Components", ', '.join([
-            component.name
-            for components in ticket.fields.components
-        ]))
-        Stdout.table("Created", ticket.fields.created)
-        Stdout.table("Updated", ticket.fields.updated)
-        Stdout.table("Resolved", ticket.fields.resolutiondate if ticket.fields.resolutiondate else '')
-        Stdout.section("Description")
-        print(ticket.fields.description)
+    Stdout.title(ticket_id)
+    if not ticket_id:
+        raise ValueError("Ticket ID is required.")
+    ticket: jira.resources.Issue = jira.issue(ticket_id)
+    Stdout.table("Summary", ticket.fields.summary)
+    Stdout.table("URL", f'{HOST}/browse/{ticket.key}')
+    # Stdout.table("Project", ticket.fields.project.key)
+    Stdout.table("Type", Format.color(ticket.fields.issuetype.name))
+    Stdout.table("Priority", ticket.fields.priority.name)
+    Stdout.table("Status", ticket.fields.status.statusCategory.key)
+    Stdout.table("Assignee", ticket.fields.assignee.displayName if ticket.fields.assignee else '')
+    Stdout.table("Reporter", ticket.fields.reporter.displayName if ticket.fields.reporter else '')
+    Stdout.table("Creator", ticket.fields.creator.displayName if ticket.fields.creator else '')
+    Stdout.table("Labels", ', '.join(ticket.fields.labels))
+    Stdout.table("Components", ', '.join([
+        component.name
+        for components in ticket.fields.components
+    ]))
+    Stdout.table("Created", ticket.fields.created)
+    Stdout.table("Updated", ticket.fields.updated)
+    Stdout.table("Resolved", ticket.fields.resolutiondate if ticket.fields.resolutiondate else '')
+    Stdout.section("Description")
+    print(ticket.fields.description)
+    Stdout.line()
+    for attachment in ticket.fields.attachment:
+        print(Format.color(attachment.filename),
+              "|",
+              Format.color(attachment.author.displayName),
+              "|",
+              Format.color(attachment.created))
+        print(attachment.content)
         Stdout.line()
-        for attachment in ticket.fields.attachment:
-            print(Format.color(attachment.filename),
-                  "|",
-                  Format.color(attachment.author.displayName),
-                  "|",
-                  Format.color(attachment.created))
-            print(attachment.content)
-            Stdout.line()
-        for comment in ticket.fields.comment.comments:
-            print(Format.bold(comment.id),
-                  "|",
-                  Format.color(comment.author.displayName),
-                  "|",
-                  Format.color(comment.created))
-            print(comment.body)
-            Stdout.line()
+    for comment in ticket.fields.comment.comments:
+        print(Format.bold(comment.id),
+              "|",
+              Format.color(comment.author.displayName),
+              "|",
+              Format.color(comment.created))
+        print(comment.body)
+        Stdout.line()
 
 
 @begin.subcommand

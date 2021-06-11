@@ -24,6 +24,11 @@ Put the following content in *$HOME/.opal*
 
 ## Usage
 
+##### Search for work in progress in this sprint
+```
+python3 opal.py search --mine --active --sort-by "status"
+```
+
 ##### Get ticket details
 ```
 python3 opal.py details RXRM-2864
@@ -57,4 +62,19 @@ python3 opal.py search --ticket-type "story" --assignee "martin castro"
 ##### Search for all bugs
 ```
 python3 opal.py search --ticket-type "bug" --status "in progress"
+```
+
+##### Search for all tickets in this sprint sorted by status
+```
+python3 opal.py search --active --sort-by "status"
+```
+
+##### Search for all tickets in this sprint sorted by assignee
+```
+python3 opal.py search --active --sort-by "assignee"
+```
+
+##### Search for all tickets in validation in this sprint
+```
+python3 opal.py search --active --status "in validation" --sort-by "assignee"
 ```
