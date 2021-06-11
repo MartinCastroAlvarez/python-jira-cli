@@ -81,5 +81,5 @@ python3 opal.py search --active --status "in validation" --sort-by "assignee"
 
 ##### Create a new bug.
 ```
-python3 opal.py create --priority "high" --active --status "in validation" --sort-by "assignee"
+python3 opal.py create --priority "high" --active --status "in validation" 
 ```
